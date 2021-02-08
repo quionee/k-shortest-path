@@ -1,91 +1,127 @@
 import sys
+import math
 from fibheap import *
 
 from graph import Graph
 
 def readFile(fileName):
-    instance = open(fileName)
+    filePath = "../updated_instances/" + fileName
 
-    name = instance.readline().rstrip("\n").split()[-1]
+    instance = open(filePath)
 
-    instance.readline()
-    instance.readline()
+    line = instance.readline().split()
 
-    numberOfNodes = int(instance.readline().rstrip("\n").split()[-1])
-    numberOfArcs = numberOfNodes**2
+    numberOfNodes = int(line[0])
+    numberOfArcs = int(line[1])
 
-    instance.readline()
-    instance.readline()
-    instance.readline()
+    nodesSet = []
 
-    matrix = []
+    for i in range(1, numberOfNodes + 1):
+        nodesSet.append(i)
 
-    for i in range(numberOfNodes):
+    arcsSet = []
+    for i in range(numberOfArcs):
         line = instance.readline().split()
-        line = list(map(int, line))
+        arcsSet.append([int(line[0]), int(line[1]), int(line[2])])
 
-        row = []
-
-        for j in range(numberOfNodes):
-            row.append(line[j])
-        
-        matrix.append(row)
-
-    graph = Graph(name, numberOfNodes, numberOfArcs, matrix)
+    graph = Graph(fileName, numberOfNodes, numberOfArcs, nodesSet, arcsSet)
 
     return graph
 
 
-def deviationPathProcedure(O-D-pair, k):
-    # 01: Calculate the first shortest path p1 between the O-D pair
-    
-    C = makefheap()
-    fheappush(C, (pathCost, p1))
+def dijkstra(graph, source):
+    dist = {}
+    previous = {}
 
+    Q = makefheap()
+
+    for node in graph.getNodesSet():
+        dist[node] = math.inf
+        previous[node] = None
+
+        fheappush(Q, (dist[node], node))
+
+    dist[source] = 0
+    network = graph.getNetwork()
+
+    while Q.num_nodes:
+        u = fheappop(Q)
+        
+        neighbours = graph.getNodeNeighbours(u[1])
+        for neighbour in neighbours:
+            alt = dist[u[1]] + network[u[1], neighbour]
+
+            if alt < dist[neighbour]:
+                dist[neighbour] = alt
+                previous[neighbour] = u[1]
+
+    return dist, previous
+
+
+def setShortestPath(dist, previous, originNode, destinyNode):
+    notFoundShortestPath = True
+    shortestPath = [destinyNode, previous[destinyNode]]
+    currentNode = previous[destinyNode]
+
+    while notFoundShortestPath:
+        if shortestPath[-1] != originNode:
+            shortestPath.append(previous[currentNode])
+            currentNode = previous[currentNode]
+        else:
+            notFoundShortestPath = False
+
+    return shortestPath[::-1]
+
+
+def deviationPathProcedure(originNode, destinyNode, k, graph):
+    # 01: Calculate the first shortest path p1 between the O-D pair.
+    dist, previous = dijkstra(graph, originNode)
+    p1 = setShortestPath(dist, previous, originNode, destinyNode)
+
+    # print('\nDIST: \n\n', dist)
+    # print('\n\nP1: \n\n', p1)
+    # 02: Set candidate path collection C: { = p1} and set determined path collection L: = VAZIO.
+    C = makefheap()
+    fheappush(C, (dist[destinyNode], p1))
     L = []
 
-    for j in range(k)
-        if not(len(C) != 0):
+    for j in range(1, k + 1):
+        # If C = VAZIO, Then stop and return L.
+        if not(C.num_nodes):
             return L
-        
-        pj = getfheapmin(C)
-        fheappop(C)
 
+        # Set pj as the path at the top of C; and remove pj from C.
+        pj = fheappop(C)
+
+        # Add pj into L.
         L.append(pj)
 
         # 07: Call CalDevPaths Procedure to calculate deviation path set Dj. (algorithms different here)
-        # Dj
+        Dj = yensAlgorithm()
 
         fheapunion(C, Dj)
 
     return L
 
 
-# Input: O-D pair, k
-# Return: Determined path collectionL
-# 01: Calculate the first shortest path p1 between the O-D pair.
-# 02: Set candidate path collection C: { = p1} and set determined path collection L: = .
-# 03: For j := 1 to k
-    # 04: If C = , Then stop and return L.
-    # 05: Set p j as the path at the top of C; and remove p j from C.
-    # 06: Add p j into L.
-    # 07: Call CalDevPaths Procedure to calculate deviation path set Dj. (algorithms different here)
-    # 08: Set C: C D = j.
-# # 09: End for
-# 10: Return L.
+def yensAlgorithm():
+    print('Yen\'s Algorithm')
+
+
+def mpsAlgorithm():
+    print('M-P\'s Algorithm')
 
 
 def main(args):
-    # print('ARGS: ', args)
-    # fileName = args[1]
+    fileName = args[1]
 
-    # filePath = "../instances/" + fileName
+    graph = readFile(fileName)
 
-    # graph = readFile(filePath)
+    originNode = 1
+    destinyNode = 100
+    k = 2
 
-    # print(graph.printGraphInfo())
-
-
+    deviationPathProcedure(originNode, destinyNode, k, graph)
 
 
 if __name__ == "__main__":
