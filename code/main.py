@@ -46,7 +46,7 @@ def dijkstra(graph, source):
 
     while Q.num_nodes:
         u = fheappop(Q)
-        
+
         neighbours = graph.getNodeNeighbours(u[1])
         for neighbour in neighbours:
             alt = dist[u[1]] + network[u[1], neighbour]
@@ -104,12 +104,104 @@ def deviationPathProcedure(originNode, destinyNode, k, graph):
     return L
 
 
-def yensAlgorithm():
+def restoreNetwork():
+    print('restore network')
+
+
+def yensAlgorithm(nodes, arcsSet, pj, L):
     print('Yen\'s Algorithm')
 
+    numberOfArcsOfPj = len(pj)
+    setOfDeviationPath = []
 
-def mpsAlgorithm():
+    # 01: Call FindFirstDevNode(p , L j )
+    # to determine the first deviation node nmj of pj and the associated deviation link set Emj at nmj.
+    firstDeviationNode = 1
+    posOfDeviationNode = 1
+    setOfAssociatedDeviationArcs = [] # deve ter a forma de (v_{i}, v_{i + 1})
+
+    # 02: Remover os vértices do caminho raiz do problema até o nó de desvio
+    for i in range(1, m - 1):
+        del nodes[i]
+    
+    # 05: Remove all deviation links in Emj from G.
+    for arc in setOfAssociatedDeviationArcs:
+        del arcsSet[(arc)]
+    
+    # 06: l is the number of links of pj
+    for i in range(m, l - 1):
+        # 07: Remove deviation link a_{i}^{j} = (n_{i}^{j}, n_{i+1}^{j}) from G.
+        del arcsSet[(i, i + 1)]
+        
+        # 08: Set root path r_{i}^{j}.
+        rootPath = []
+
+        # 09: Calculate spur path s¯ij using forward one-to-all (or one-to-one) Dijkstra’s algorithm.
+
+        # 10: Determine deviation path p¯ij := r_{i}^{j} concatenado s{i}^{j}.
+        deviationPath = []
+
+        # 11: Add p_{i}^{j} em D^{j}.
+        setOfDeviationPath.append(deviationPath)
+
+        # 12: Remove n_{i}^{j} from G.
+        del nodes[i]
+    
+    # 14: Restore network G.
+    restoreNetwork()
+
+    # 15: Retun Dj
+    return setOfDeviationPath
+
+
+def findSpurPathMP():
+    print('findSpurPathMP')
+
+
+def mpsAlgorithm(nodes, arcsSet, pj, L):
     print('M-P\'s Algorithm')
+
+    numberOfArcsOfPj = len(pj)
+    setOfDeviationPath = []
+
+    # 01: Call FindFirstDevNode(p , L j )
+    # to determine the first deviation node nmj of pj and the associated deviation link set Emj at nmj.
+    firstDeviationNode = 1
+    posOfDeviationNode = 1
+    setOfAssociatedDeviationArcs = [] # deve ter a forma de (v_{i}, v_{i + 1})
+
+    # 02: Remover os vértices e arestas do caminho raiz do problema até o nó de desvio
+    for i in range(1, l - 1):
+        del nodes[i]
+        del arcsSet[(i, i + 1)] # revisar
+    
+    # 03: Remove all links in E_{m}^j de G
+    for arc in setOfAssociatedDeviationArcs:
+        del arcsSet[(arc)]
+    
+    # 06: Call the backward one-to-all Dijkstra’s algorithm to calculate
+    # the shortest path p_{n_{v}d} from every node n{v} to destination d.
+
+    for i in range(l - 1, m):
+        # 08: Restore node n_{i}^j to G
+
+        # 09: Set root path r_{i}^{j} = (n_{1}^j, ..., n_{i}^j).
+        rootPath = []
+
+        # 10: Call FindSpurPath-MP(n_{i}^j, a_{i}^j) to calculate s_{i}^j.
+        findSpurPath-MP()
+
+        # 10: Determine deviation path p¯ij := r_{i}^{j} concatenado s{i}^{j}.
+        deviationPath = []
+        
+        # 11: Add p_{i}^{j} em D^{j}.
+        setOfDeviationPath.append(deviationPath)
+    
+    # 14: Restore network G.
+    restoreNetwork()
+
+    # 15: Retun Dj
+    return setOfDeviationPath
 
 
 def main(args):
