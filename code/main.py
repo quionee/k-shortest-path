@@ -1,8 +1,10 @@
 import sys
 import math
+import copy
 from fibheap import *
 
 from graph import Graph
+from tree_of_paths import TreeOfPaths
 
 def readFile(fileName):
     filePath = "../updated_instances/" + fileName
@@ -83,7 +85,16 @@ def deviationPathProcedure(originNode, destinyNode, k, graph):
     # 02: Set candidate path collection C: { = p1} and set determined path collection L: = VAZIO.
     C = makefheap()
     fheappush(C, (dist[destinyNode], p1))
-    L = []
+
+    # Cria árvore de desvios
+    L = TreeOfPaths()
+
+    # print('L: ', L.getTreeOfPaths())
+    # L.addNewPath((10, [1, 2, 4, 10]), 1)
+    # L.addNewPath((12, [1, 3, 6, 8, 7, 10]), 3)
+    # L.addNewPath((14, [1, 3, 6, 8, 9, 10]), 8)
+
+    deviationVertex = 1
 
     for j in range(1, k + 1):
         # If C = VAZIO, Then stop and return L.
@@ -94,10 +105,12 @@ def deviationPathProcedure(originNode, destinyNode, k, graph):
         pj = fheappop(C)
 
         # Add pj into L.
-        L.append(pj)
+        L.addNewPath(pj, deviationVertex)
+
+        # print(graph.printGraphInfo())
 
         # 07: Call CalDevPaths Procedure to calculate deviation path set Dj. (algorithms different here)
-        Dj = yensAlgorithm()
+        Dj, deviationVertex = yensAlgorithm(graph.getNodesSet(), graph.getNetwork(), pj, L)
 
         fheapunion(C, Dj)
 
@@ -108,30 +121,41 @@ def restoreNetwork():
     print('restore network')
 
 
-def yensAlgorithm(nodes, arcsSet, pj, L):
-    print('Yen\'s Algorithm')
+def findDeviationVertex(path, L):
+    deviationVertex = 1
+    setOfAssociatedDeviationArcs = [(1, 3)]
 
-    numberOfArcsOfPj = len(pj)
+    # for p in L.getTreeOfPaths().values():
+
+    return 1, setOfAssociatedDeviationArcs
+
+
+def yensAlgorithm(nodesSet, arcsSet, pj, L):
+    numberOfArcsOfPj = len(pj[1])
     setOfDeviationPath = []
 
-    # 01: Call FindFirstDevNode(p , L j )
+    # 01: Call FindFirstDevNode(p_j, L)
     # to determine the first deviation node nmj of pj and the associated deviation link set Emj at nmj.
-    firstDeviationNode = 1
-    posOfDeviationNode = 1
-    setOfAssociatedDeviationArcs = [] # deve ter a forma de (v_{i}, v_{i + 1})
+    deviationVertex, setOfAssociatedDeviationArcs = findDeviationVertex(pj, L)
+
+    m = nodesSet.index(deviationVertex)
+    l = numberOfArcsOfPj - 1
+    # print('\n\nl: ', pj[1], numberOfArcsOfPj, l, '\n\n')
 
     # 02: Remover os vértices do caminho raiz do problema até o nó de desvio
-    for i in range(1, m - 1):
-        del nodes[i]
-    
+    currentVertices = nodesSet[m:]
+    currentArcs = copy.copy(arcsSet)
+
     # 05: Remove all deviation links in Emj from G.
-    for arc in setOfAssociatedDeviationArcs:
-        del arcsSet[(arc)]
-    
+    arcPos = len(setOfAssociatedDeviationArcs)
+    while arcPos > 0:
+        arcPos -= 1
+        del currentArcs[setOfAssociatedDeviationArcs[arcPos]]
+
     # 06: l is the number of links of pj
     for i in range(m, l - 1):
         # 07: Remove deviation link a_{i}^{j} = (n_{i}^{j}, n_{i+1}^{j}) from G.
-        del arcsSet[(i, i + 1)]
+        del currentArcs[(i, i + 1)]
         
         # 08: Set root path r_{i}^{j}.
         rootPath = []
@@ -151,7 +175,7 @@ def yensAlgorithm(nodes, arcsSet, pj, L):
     restoreNetwork()
 
     # 15: Retun Dj
-    return setOfDeviationPath
+    return setOfDeviationPath, deviationVertex
 
 
 def findSpurPathMP():
@@ -210,7 +234,7 @@ def main(args):
     graph = readFile(fileName)
 
     originNode = 1
-    destinyNode = 100
+    destinyNode = 10
     k = 2
 
     deviationPathProcedure(originNode, destinyNode, k, graph)
