@@ -2,12 +2,9 @@ class Vertex:
 
     def __init__(self, numberOfRamifications, nextVertex, firstRamificationSubTreeLength):
         self.numberOfRamifications = numberOfRamifications
-        self.eachRamificationSubTreeLength = { int(nextVertex): firstRamificationSubTreeLength }
+        self.nextVertices = [nextVertex]
 
 
-    def setRamificationsSubTreeLength(self):
-        print('set')
-    
-    def addNewRamification(self, nextVertex, ramificationSubTreeLength):
+    def addNewRamification(self, nextVertex):
         self.numberOfRamifications += 1
-        self.eachRamificationSubTreeLength[int(nextVertex)] = ramificationSubTreeLength
+        self.nextVertices.append(nextVertex)

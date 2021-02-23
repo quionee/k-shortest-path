@@ -47,7 +47,6 @@ class Graph:
 
         for arc in self.__arcsSet:
             network[arc[0], arc[1]] = arc[2]
-
             adjacencyList[arc[0]].append(arc[1])
 
         return network, adjacencyList
@@ -58,5 +57,5 @@ class Graph:
 
 
     def printGraphInfo(self):
-        return 'File name: %s \nNumber of nodes: %d \nNumber of arcs: %d \nMatrix: %s \nadjacency: %s' \
-                % (self.__name, self.__numberOfNodes, self.__numberOfArcs, self.__network, self.__adjacencyList)
+        return 'File name: %s \nNumber of nodes: %d \nNodes: %s \nNumber of arcs: %d \nArcs set: %s \nMatrix: %s \nadjacency: %s' \
+                % (self.__name, self.__numberOfNodes, self.__nodesSet, self.__numberOfArcs, self.__arcsSet, self.__network, self.__adjacencyList)

@@ -31,19 +31,30 @@ def readFile(fileName):
     return graph
 
 
+def buildGraph(currentVertices, currentArcs):
+    arcsSet = []
+    for i in currentArcs:
+        arcsSet.append([i[0], i[1], currentArcs[i]])
+
+    graph = Graph('', len(currentVertices), len(currentArcs), currentVertices, arcsSet)
+
+    return graph
+
+
 def dijkstra(graph, source):
     dist = {}
     previous = {}
 
     Q = makefheap()
+    dist[source] = 0
 
     for node in graph.getNodesSet():
-        dist[node] = math.inf
-        previous[node] = None
+        if (node != source):
+            dist[node] = math.inf
+            previous[node] = None
 
         fheappush(Q, (dist[node], node))
 
-    dist[source] = 0
     network = graph.getNetwork()
 
     while Q.num_nodes:
@@ -56,43 +67,43 @@ def dijkstra(graph, source):
             if alt < dist[neighbour]:
                 dist[neighbour] = alt
                 previous[neighbour] = u[1]
+            
+            if (neighbour < u[1]):
+                fheappush(Q, (dist[neighbour], neighbour))
 
     return dist, previous
 
 
 def setShortestPath(dist, previous, originNode, destinyNode):
-    notFoundShortestPath = True
-    shortestPath = [destinyNode, previous[destinyNode]]
-    currentNode = previous[destinyNode]
+    if (previous[destinyNode] != None):
+        notFoundShortestPath = True
+        shortestPath = [destinyNode, previous[destinyNode]]
+        currentNode = previous[destinyNode]
 
-    while notFoundShortestPath:
-        if shortestPath[-1] != originNode:
-            shortestPath.append(previous[currentNode])
-            currentNode = previous[currentNode]
-        else:
-            notFoundShortestPath = False
+        while notFoundShortestPath:
+            if shortestPath[-1] != originNode:
+                shortestPath.append(previous[currentNode])
+                currentNode = previous[currentNode]
+            else:
+                notFoundShortestPath = False
 
-    return shortestPath[::-1]
+        return shortestPath[::-1]
+    else:
+        None
 
 
 def deviationPathProcedure(originNode, destinyNode, k, graph):
     # 01: Calculate the first shortest path p1 between the O-D pair.
     dist, previous = dijkstra(graph, originNode)
+
     p1 = setShortestPath(dist, previous, originNode, destinyNode)
 
-    # print('\nDIST: \n\n', dist)
-    # print('\n\nP1: \n\n', p1)
     # 02: Set candidate path collection C: { = p1} and set determined path collection L: = VAZIO.
     C = makefheap()
     fheappush(C, (dist[destinyNode], p1))
 
     # Cria árvore de desvios
     L = TreeOfPaths()
-
-    # print('L: ', L.getTreeOfPaths())
-    # L.addNewPath((10, [1, 2, 4, 10]), 1)
-    # L.addNewPath((12, [1, 3, 6, 8, 7, 10]), 3)
-    # L.addNewPath((14, [1, 3, 6, 8, 9, 10]), 8)
 
     deviationVertex = 1
 
@@ -105,77 +116,139 @@ def deviationPathProcedure(originNode, destinyNode, k, graph):
         pj = fheappop(C)
 
         # Add pj into L.
-        L.addNewPath(pj, deviationVertex)
-
-        # print(graph.printGraphInfo())
+        L.addNewPath(pj)
 
         # 07: Call CalDevPaths Procedure to calculate deviation path set Dj. (algorithms different here)
-        Dj, deviationVertex = yensAlgorithm(graph.getNodesSet(), graph.getNetwork(), pj, L)
+        Dj = yensAlgorithm(graph.getNodesSet(), graph.getNetwork(), pj, L, j)
 
         fheapunion(C, Dj)
 
     return L
 
 
-def restoreNetwork():
-    print('restore network')
-
-
-def findDeviationVertex(path, L):
+def findDeviationVertex(path, L, j):
     deviationVertex = 1
-    setOfAssociatedDeviationArcs = [(1, 3)]
+    setOfAssociatedDeviationArcs = []
 
-    # for p in L.getTreeOfPaths().values():
+    pathName = 'p' + str(j)
 
-    return 1, setOfAssociatedDeviationArcs
+    if len(L.getTreeOfPaths()) != 1:
+
+        vertexWithMoreRamifications = 1
+        foundDeviationVertex = False
+
+        i = len(path[1]) - 2
+        while i >= 0 and not(foundDeviationVertex):
+            if path[1][i] in L.getTreeOfPaths()[pathName][1]:
+                if L.getTreeOfPaths()[pathName][1][path[1][i]].numberOfRamifications > 1:
+                    vertexWithMoreRamifications = path[1][i]
+                    foundDeviationVertex = True
+                    deviationVertex = path[1][i]
+
+            else:
+                i += 1
+                pathName = L.getTreeOfPaths()[pathName][0][1]
+
+            i -= 1
+
+        i = path[1].index(deviationVertex)
+        while i >= 0:
+            if path[1][i] in L.getTreeOfPaths()[pathName][1]:
+                for vertex in L.getTreeOfPaths()[pathName][1][path[1][i]].nextVertices:
+                    setOfAssociatedDeviationArcs.append((path[1][i], vertex))
+            else:
+                i += 1
+                pathName = L.getTreeOfPaths()[pathName][0][1]
+
+            i -= 1
+
+        setOfAssociatedDeviationArcs.remove((deviationVertex, path[1][path[1].index(deviationVertex) + 1]))
+
+    return deviationVertex, setOfAssociatedDeviationArcs
 
 
-def yensAlgorithm(nodesSet, arcsSet, pj, L):
+def removeIncidentArcsOfRemovedVertex(removedVertex, currentVertices, currentArcs, adjacencyList):
+    for vertex in adjacencyList[removedVertex]:
+        del currentArcs[(removedVertex, vertex)]
+    
+    for i in currentVertices:
+        if (i, removedVertex) in currentArcs:
+            del currentArcs[i, removedVertex]
+
+    return currentArcs
+
+
+def getDistanceOfPath(path, arcsSet):
+    pathDistance = 0
+
+    for i in range(len(path) - 1):
+        pathDistance += arcsSet[(path[i], path[i + 1])]
+
+    return pathDistance
+
+
+def yensAlgorithm(nodesSet, arcsSet, pj, L, j):
     numberOfArcsOfPj = len(pj[1])
-    setOfDeviationPath = []
+    setOfDeviationPath = makefheap()
 
-    # 01: Call FindFirstDevNode(p_j, L)
-    # to determine the first deviation node nmj of pj and the associated deviation link set Emj at nmj.
-    deviationVertex, setOfAssociatedDeviationArcs = findDeviationVertex(pj, L)
+    # 01: FindFirstDevNode(p_j, L) to determine the first deviation node nmj of pj and the associated deviation link set Emj at nmj.
+    deviationVertex, setOfAssociatedDeviationArcs = findDeviationVertex(pj, L, j)
 
-    m = nodesSet.index(deviationVertex)
+    arcsOfPj = []
+    for i in range(len(pj[1]) - 1):
+        arcsOfPj.append((pj[1][i], pj[1][i + 1]))
+
+    m = pj[1].index(deviationVertex)
     l = numberOfArcsOfPj - 1
-    # print('\n\nl: ', pj[1], numberOfArcsOfPj, l, '\n\n')
 
     # 02: Remover os vértices do caminho raiz do problema até o nó de desvio
-    currentVertices = nodesSet[m:]
+    currentVertices = copy.copy(nodesSet)
+
+    i = 0
+    while i < m:
+        currentVertices.remove(pj[1][i])
+        i += 1
+
     currentArcs = copy.copy(arcsSet)
 
     # 05: Remove all deviation links in Emj from G.
-    arcPos = len(setOfAssociatedDeviationArcs)
-    while arcPos > 0:
-        arcPos -= 1
-        del currentArcs[setOfAssociatedDeviationArcs[arcPos]]
+    for arc in setOfAssociatedDeviationArcs:
+        del currentArcs[arc]
+    
 
     # 06: l is the number of links of pj
     for i in range(m, l - 1):
         # 07: Remove deviation link a_{i}^{j} = (n_{i}^{j}, n_{i+1}^{j}) from G.
-        del currentArcs[(i, i + 1)]
-        
+        del currentArcs[arcsOfPj[i]]
+
         # 08: Set root path r_{i}^{j}.
-        rootPath = []
+        rootPath = pj[1][:i + 1]
+
+        newGraph = buildGraph(currentVertices, currentArcs)
+
+        originVertexPos = currentVertices.index(rootPath[-1])
 
         # 09: Calculate spur path s¯ij using forward one-to-all (or one-to-one) Dijkstra’s algorithm.
+        dist, previous = dijkstra(newGraph, currentVertices[originVertexPos])
 
-        # 10: Determine deviation path p¯ij := r_{i}^{j} concatenado s{i}^{j}.
-        deviationPath = []
+        shortestPath = setShortestPath(dist, previous, currentVertices[originVertexPos], currentVertices[-1])
+        
+        if (shortestPath != None):
+            spurPath = shortestPath[1:]
 
-        # 11: Add p_{i}^{j} em D^{j}.
-        setOfDeviationPath.append(deviationPath)
+            # 10: Determine deviation path p¯ij := r_{i}^{j} concatenado s{i}^{j}.
+            deviationPath = rootPath + spurPath
+            deviationPathDistance = getDistanceOfPath(deviationPath, arcsSet)
+
+            # 11: Add p_{i}^{j} em D^{j}.
+            fheappush(setOfDeviationPath, (deviationPathDistance, deviationPath))
 
         # 12: Remove n_{i}^{j} from G.
-        del nodes[i]
-    
-    # 14: Restore network G.
-    restoreNetwork()
+        currentArcs = removeIncidentArcsOfRemovedVertex(pj[1][i], currentVertices, currentArcs, newGraph.getAdjacencyList())
+        currentVertices.remove(pj[1][i])
 
     # 15: Retun Dj
-    return setOfDeviationPath, deviationVertex
+    return setOfDeviationPath
 
 
 def findSpurPathMP():
@@ -188,23 +261,21 @@ def mpsAlgorithm(nodes, arcsSet, pj, L):
     numberOfArcsOfPj = len(pj)
     setOfDeviationPath = []
 
-    # 01: Call FindFirstDevNode(p , L j )
-    # to determine the first deviation node nmj of pj and the associated deviation link set Emj at nmj.
+    # 01: Call FindFirstDevNode(p , L j ) to determine the first deviation node nmj of pj and the associated deviation link set Emj at nmj.
     firstDeviationNode = 1
     posOfDeviationNode = 1
-    setOfAssociatedDeviationArcs = [] # deve ter a forma de (v_{i}, v_{i + 1})
+    setOfAssociatedDeviationArcs = []
 
     # 02: Remover os vértices e arestas do caminho raiz do problema até o nó de desvio
     for i in range(1, l - 1):
         del nodes[i]
-        del arcsSet[(i, i + 1)] # revisar
+        del arcsSet[(i, i + 1)]
     
     # 03: Remove all links in E_{m}^j de G
     for arc in setOfAssociatedDeviationArcs:
         del arcsSet[(arc)]
     
-    # 06: Call the backward one-to-all Dijkstra’s algorithm to calculate
-    # the shortest path p_{n_{v}d} from every node n{v} to destination d.
+    # 06: Call the backward one-to-all Dijkstra’s algorithm to calculate the shortest path p_{n_{v}d} from every node n{v} to destination d.
 
     for i in range(l - 1, m):
         # 08: Restore node n_{i}^j to G
@@ -235,9 +306,17 @@ def main(args):
 
     originNode = 1
     destinyNode = 10
-    k = 2
+    k = 4
 
-    deviationPathProcedure(originNode, destinyNode, k, graph)
+    k_shortes_paths = deviationPathProcedure(originNode, destinyNode, k, graph)
+
+
+
+    for p in k_shortes_paths.getTreeOfPaths():
+        print('\n\n ---------- ', p, ' ----------\n')
+        for vertex in k_shortes_paths.getTreeOfPaths()[p][1]:
+            print('V:', vertex, ' -  R:', k_shortes_paths.getTreeOfPaths()[p][1][vertex].numberOfRamifications, ' -  T:', k_shortes_paths.getTreeOfPaths()[p][1][vertex].nextVertices)
+
 
 
 if __name__ == "__main__":
