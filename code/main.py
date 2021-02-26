@@ -236,7 +236,7 @@ def yensAlgorithm(nodesSet, arcsSet, pj, L, j):
 
             fheappush(setOfDeviationPaths, (deviationPathDistance, deviationPath))
         else:
-            print('\nA rede não possui caminhos possíveis da orgigem atual com os arcos existentes.')
+            print('\nA rede não possui caminhos possíveis da origem atual com os arcos existentes.')
 
         currentArcs = removeIncidentArcsOfRemovedVertex(pj[1][i], currentVertices, currentArcs, newGraph.getAdjacencyList())
         currentVertices.remove(pj[1][i])
