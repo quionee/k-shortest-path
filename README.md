@@ -1,4 +1,6 @@
-# Um estudo sobre o problema dos K caminhos mais curtos
+# Um estudo sobre o problema dos *K* caminhos mais curtos
+
+O problema dos *K* caminhos mais curtos acíclicos consiste em encontrar, em uma rede direcionada valorada, um conjunto de *K* rotas, minimizando o caminho percorrido entre um ponto de origem e um ponto de destino. O código foi implementado utilizando um algoritmo clássico da literatura para o problema, o algoritmo de Yen, retirado do artigo *Finding the K Shortest Loopless Paths in a Network* de 1971.
 
 ## Requirements
 Para utilizar este código, você precisará de:   
