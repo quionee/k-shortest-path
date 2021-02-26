@@ -28,7 +28,7 @@ Assim, para executar o código, basta entrar na pasta *code* e rodar o arquivo *
 
 Para Linux e Mac:
 ```
-python main.py test_instance.txt
+$ python main.py test_instance.txt
 ```
 
 Para Windows:
