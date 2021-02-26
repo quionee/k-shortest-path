@@ -35,3 +35,5 @@ Para Windows:
 ```
 > python .\main.py test_instance.txt
 ```
+
+Copyright (c) 2020 Lorena Tavares
